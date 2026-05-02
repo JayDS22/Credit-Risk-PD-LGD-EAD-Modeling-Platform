@@ -1,0 +1,71 @@
+# Credit Risk Platform Configuration
+data:
+  random_seed: 42
+  n_samples: 500000
+  default_rate: 0.045
+  test_size: 0.2
+  validation_size: 0.15
+  performance_window_months: 12
+
+pd_model:
+  algorithm: "xgboost"
+  logistic_params:
+    C: 1.0
+    max_iter: 1000
+    solver: "lbfgs"
+  xgboost_params:
+    n_estimators: 300
+    max_depth: 6
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 5
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+    scale_pos_weight: 20
+  n_risk_grades: 10
+  calibration_method: "isotonic"
+
+lgd_model:
+  algorithm: "two_stage"
+  cure_rate_threshold: 0.01
+  beta_regression_link: "logit"
+  n_defaulted_samples: 50000
+
+ead_model:
+  algorithm: "cox_ccf"
+  ccf_bins: 10
+  survival_baseline: "breslow"
+
+regulatory:
+  framework: "basel_iii"
+  approach: "irb_advanced"
+  confidence_level_el: 0.95
+  confidence_level_ec: 0.999
+  maturity_default: 2.5
+  asset_correlation_range: [0.15, 0.24]
+  lgd_downturn_floor: 0.10
+
+stress_testing:
+  scenarios:
+    baseline:
+      unemployment_delta: 0.0
+      gdp_delta: 0.0
+      property_value_delta: 0.0
+    adverse:
+      unemployment_delta: 0.03
+      gdp_delta: -0.02
+      property_value_delta: -0.20
+    severely_adverse:
+      unemployment_delta: 0.05
+      gdp_delta: -0.04
+      property_value_delta: -0.35
+
+validation:
+  psi_threshold: 0.25
+  ks_threshold: 0.40
+  hosmer_lemeshow_groups: 10
+  backtest_years: 3
+  traffic_light_zones:
+    green: 0.95
+    yellow: 0.9999

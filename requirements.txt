@@ -1,0 +1,25 @@
+# Credit Risk PD/LGD/EAD Modeling Platform
+# Core
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# ML & Statistics
+scikit-learn>=1.3.0
+xgboost>=1.7.0
+statsmodels>=0.14.0
+lifelines>=0.27.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Utilities
+joblib>=1.3.0
+tqdm>=4.65.0
+pyyaml>=6.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
