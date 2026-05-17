@@ -28,76 +28,48 @@ Comprehensive credit risk quantification system implementing the **Basel III reg
 
 ## Architecture
 
-```
-+-----------------------------------------------------------------------------+
-|                    CREDIT RISK PD/LGD/EAD MODELING PLATFORM                 |
-|                         Basel III Regulatory Framework                       |
-+-----------------------------------------------------------------------------+
+```mermaid
+flowchart LR
+    classDef data fill:#1d2a3a,stroke:#58a6ff,stroke-width:2px,color:#e6edf3
+    classDef model fill:#1f2a23,stroke:#3fb950,stroke-width:2px,color:#e6edf3
+    classDef val fill:#2a2520,stroke:#c9a227,stroke-width:2px,color:#e6edf3
+    classDef reg fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#e6edf3
 
-+------------------+    +------------------+    +--------------------------+
-|   DATA LAYER     |    |  FEATURE ENGINE  |    |     MODEL LAYER          |
-|                  |    |                  |    |                          |
-| +--------------+ |    | +--------------+ |    | +----------------------+ |
-| |  Synthetic   |-+--->| |  100+ Credit | |    | |  PD Model            | |
-| |  Data Gen    | |    | |  Features    |-+--->| |  - Logistic Reg      | |
-| |  (500K+)     | |    | |              | |    | |  - XGBoost           | |
-| +--------------+ |    | +--------------+ |    | |  - Risk Grades (10)  | |
-|                  |    | +--------------+ |    | +----------------------+ |
-| +--------------+ |    | |  WoE / IV    | |    | +----------------------+ |
-| |  Borrower    | |    | |  Analysis    | |    | |  LGD Model           | |
-| |  Profiles    | |    | |  (IV: 0.42)  | |    | |  - Beta Regression   | |
-| +--------------+ |    | +--------------+ |    | |  - Two-Stage GBM     | |
-|                  |    | +--------------+ |    | +----------------------+ |
-| +--------------+ |    | |  KS Test     | |    | +----------------------+ |
-| |  Macro       | |    | |  Validation  | |    | |  EAD Model           | |
-| |  Indicators  | |    | |  (p<0.01)    | |    | |  - Cox Regression    | |
-| +--------------+ |    | +--------------+ |    | |  - CCF Estimation    | |
-+------------------+    +------------------+    | +----------------------+ |
-                                                +--------------------------+
-                                                            |
-                         +----------------------------------+
-                         |                                  |
-                         v                                  v
-+----------------------------------+   +-----------------------------------+
-|       VALIDATION SUITE           |   |     REGULATORY & CAPITAL          |
-|                                  |   |                                   |
-| +------------------------------+ |   | +-------------------------------+ |
-| |  Hosmer-Lemeshow (chi2: 12.4)| |   | |  Expected Loss Framework      | |
-| |  PSI Monitoring (0.08)       | |   | |  EL = PD x LGD x EAD         | |
-| |  Binomial Backtest           | |   | |  $2.3B exposure processing    | |
-| |  Traffic Light Approach      | |   | +-------------------------------+ |
-| |  ROC/CAP Curves              | |   | +-------------------------------+ |
-| |  Migration Matrices          | |   | |  IRB Advanced RWA             | |
-| +------------------------------+ |   | |  Vasicek TTC/PIT Calibration  | |
-+----------------------------------+   | |  Asset Corr: 0.15-0.24       | |
-                                       | +-------------------------------+ |
-                                       | +-------------------------------+ |
-                                       | |  Stress Testing                | |
-                                       | |  - Unemployment: +3pp         | |
-                                       | |  - GDP: -2%                   | |
-                                       | |  - Property: -20%             | |
-                                       | |  - PD Migration: +45%         | |
-                                       | +-------------------------------+ |
-                                       | +-------------------------------+ |
-                                       | |  Economic Capital              | |
-                                       | |  VaR (95%, 99.9%)             | |
-                                       | |  Expected Shortfall            | |
-                                       | +-------------------------------+ |
-                                       +-----------------------------------+
+    D[Data Layer<br/>500K+ synthetic borrowers<br/>+ macro indicators]:::data
+    F[Feature Engine<br/>100+ features · WoE/IV 0.42<br/>KS validation p&lt;0.01]:::data
+    PD[PD Model<br/>Logistic + XGBoost · 10 grades]:::model
+    LGD[LGD Model<br/>Beta Reg · Two-Stage GBM]:::model
+    EAD[EAD Model<br/>Cox Reg · CCF Estimation]:::model
+    V[Validation Suite<br/>Hosmer-Lemeshow · PSI · Backtest<br/>ROC/CAP · Migration Matrices]:::val
+    R[Regulatory & Capital<br/>EL = PD × LGD × EAD<br/>IRB RWA · Stress · Economic Capital]:::reg
+
+    D --> F --> PD & LGD & EAD
+    PD --> V
+    LGD --> V
+    EAD --> V
+    V --> R
+
+    click PD href "src" "Model source"
+    click LGD href "src" "Model source"
+    click EAD href "src" "Model source"
 ```
 
 ### Pipeline Flow
 
-```
-Data Generation --> Feature Engineering --> PD Training --> LGD Training
-      |                     |                    |               |
-      |              WoE/IV Analysis       Vasicek Cal.    Beta Reg.
-      |              KS Validation         Risk Grades     Downturn LGD
-      |                                                         |
-      +---> EAD Training --> Model Validation --> Regulatory Capital
-               |                  |                      |
-           Cox/CCF          H-L Test, PSI         EL, RWA, EC
-           Survival         Backtest              Stress Testing
+```mermaid
+flowchart LR
+    A[Data Generation] --> B[Feature Engineering]
+    B --> C[PD Training]
+    C --> D[LGD Training]
+    B --> WOE[WoE/IV Analysis<br/>KS Validation]
+    C --> VAS[Vasicek Calibration<br/>Risk Grades]
+    D --> BETA[Beta Regression<br/>Downturn LGD]
+    A --> E[EAD Training]
+    E --> COX[Cox/CCF Survival]
+    E --> F[Model Validation]
+    F --> HL[H-L Test, PSI<br/>Backtest]
+    F --> G[Regulatory Capital]
+    G --> EL[EL, RWA, EC<br/>Stress Testing]
 ```
 
 ---
